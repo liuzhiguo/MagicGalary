@@ -8,7 +8,199 @@
     #panel img{display:block; padding:3px; border:1px solid #aaa; background-color:#fff; z-index:20;}
     #hidden{width:0px; height:0px; overflow:hidden;}
   </style>
+  <script type="text/javascript" src="http://mootools.net/download/get/mootools-core-1.4.5-full-compat.js"></script>
+  <script type="text/javascript" src="mootools-more-drag.js"></script>
   <script type="text/javascript" src="../lib/mposter.js"></script>
+  <script type="text/javascript">
+    var IMGS = [
+      "http://ccm.ddcdn.com/photo-s/03/46/a2/f0/caption.jpg",
+      "http://ccm.ddcdn.com/ext/photo-s/03/57/74/6c/fairmont-beijing.jpg",
+      "http://ccm.ddcdn.com/ext/photo-s/02/a5/82/2f/business-card.jpg",
+      "http://ccm.ddcdn.com/ext/photo-s/02/ad/16/96/forbidden-city.jpg",
+      "http://ccm.ddcdn.com/ext/photo-s/02/a9/6a/b1/gold-fish.jpg",
+      "http://ccm.ddcdn.com/ext/photo-s/02/af/a0/50/sushi-bar-lunar-8.jpg",
+      "http://ccm.ddcdn.com/ext/photo-s/02/af/a0/5c/lunar-8.jpg",
+      "http://ccm.ddcdn.com/ext/photo-s/02/af/a0/5a/tandoor-kitchen-lunar.jpg",
+      "http://ccm.ddcdn.com/ext/photo-s/02/af/a0/5f/fairmont-gold-lounge.jpg",
+      "http://ccm.ddcdn.com/ext/photo-s/02/b0/d9/60/fairmont-gold-room.jpg"
+    ];
+    window.addEvent("domready",function(){
+      for(var i=0;i<IMGS.length;i++){
+        var imgSrc = IMGS[i];
+        var img = document.createElement("img");
+        img.src = imgSrc;
+        hide = document.getElementById("hidden");
+        hide.appendChild(img);
+      }
+    });
+    window.addEvent("load",function(){
+      var imgArray = [];
+      var margin = 5; //images' gap
+      var panel = $("panel");
+      var imgs = panel.getElements("img");
+      var index = 0;
+      var thumnail;
+      var changedImg;
+      function start(){
+        var initCount = 18;
+        for(var i=0;i<initCount;i++){
+          addImg(true);
+        }
+        orderImgs();
+        action();
+      };
+      window.fresh = function(){
+        imgs = imgs.reverse();
+        var tmp = imgs.splice(0,Math.floor(length/2));
+        imgs.concat(tmp);
+        imgs = imgs.sort(function(a,b){
+          a = Math.random() * imgs.length + parseInt($(a).get("order"));
+          b = Math.random() * imgs.length + parseInt($(b).get("order"));
+          return a - b;
+        });
+        orderImgs();
+        action();
+      };
+      window.addImg = function(dontRun){
+        var i = imgs.length%IMGS.length;
+        var imgSrc = IMGS[i];
+        var img = new Element("img",{
+          id: "d" + (index++)
+          ,src: imgSrc
+        });
+        panel.grab(img);
+        imgs.push(img);
+        img.set("origWidth",img.offsetWidth);
+        img.set("origHeight",img.offsetHeight);
+        img.setStyles({left:(panel.offsetWidth-img.offsetWidth)/2,top:(panel.offsetHeight-img.offsetHeight)/2,"z-index":"10"});
+        img.addEvent('mousedown', function(event){
+          event.stop();
+          var shirt = this;
+          var clone = shirt.clone().setStyles(shirt.getCoordinates()).setStyles({
+            opacity: 0.7,
+            position: 'absolute',
+            pointerEvents: 'none',
+            zIndex: 30
+          }).inject(document.body);
+          changedImg = this;
+          var drag = new Drag.Move(clone, {
+            droppables: imgs,
+            onDrop: function(dragging, cart ,ent){
+              dragging.destroy();
+              if(changedImg){
+                if (cart != null){
+                  shirt.clone().inject(cart);
+                  cart.highlight('#7389AE', '#FFF');
+                  change(changedImg, cart);
+                } else{
+                  var el = document.elementFromPoint(ent.page.x, ent.page.y).tagName.toLowerCase();
+                  if(el === "body" || el === "html"){
+                    remove(changedImg);
+                  }
+                }
+                changedImg = null;
+              }
+            },
+            onEnter: function(dragging, cart){
+              cart.tween('background-color', '#98B5C1');
+            },
+            onLeave: function(dragging, cart){
+              cart.tween('background-color', '#FFF');
+            },
+            onCancel: function(dragging){
+              dragging.destroy();
+            }
+          });
+          drag.start(event);
+        });
+        img.addEvent("mouseover",function(){
+          this.setStyle("background-color","#E79D35");
+        });
+        img.addEvent("mouseout",function(){
+          this.setStyle("background-color","#fff");
+        });
+        if(!dontRun){
+          orderImgs();
+          action();
+        }
+      };
+      function change(img1, img2){
+        var order1 = img1.get("order");
+        var order2 = img2.get("order");
+        img1.set("order",order2);
+        img2.set("order",order1);
+        action();
+      };
+      function remove(img){
+        imgs.splice($(img).get("order").toInt(),1);
+        img.dispose();
+        orderImgs();
+        action();
+      };
+      function orderImgs(){
+        for(var i=0,l=imgs.length;i<l;i++){
+          var img = $(imgs[i]);
+          img.set("order",i);
+        }
+      };
+      function action(){
+        var panelSize = panel.getSize();
+        var width = panelSize.x;
+        var height = panelSize.y;
+        imgArray = imgs = imgs.sort(function(a,b){
+          return parseInt($(a).get("order")) - parseInt($(b).get("order"));
+        });
+        
+        var objects = [];
+        for(var i=0;i<imgArray.length;i++){
+          var d = $(imgArray[i]);
+          var id = d.id;
+          var w = d.get("origWidth");
+          var h = d.get("origHeight");
+          var _obj = {i:id,w:w,h:h};
+          objects.push(_obj);
+        }
+        
+        var result = Poster.parse(objects, width, height, 5, 0, fresh);
+        
+        if(!result){
+          return;
+        }
+        
+        for(var j=0,l=result.length;j<l;j++){
+          var r = result[j];
+          var _div = $(r.i);
+          var duration = '600';
+          _div.setStyle("position","absolute");
+          var widthFx = new Fx.Tween(_div, {
+            duration: duration,
+            link: 'cancel',
+            property: 'width'
+          });
+          var heightFx = new Fx.Tween(_div, {
+            duration: duration,
+            link: 'cancel',
+            property: 'height'
+          });
+          var leftFx = new Fx.Tween(_div, {
+            duration: duration,
+            link: 'cancel',
+            property: 'left'
+          });
+          var topFx = new Fx.Tween(_div, {
+            duration: duration,
+            link: 'cancel',
+            property: 'top'
+          });
+          widthFx.start(_div.getStyle("width").toInt(),r.w-2*margin-2);
+          heightFx.start(_div.getStyle("height").toInt(),r.h-2*margin-2);
+          leftFx.start(_div.offsetLeft,r.x);
+          topFx.start(_div.offsetTop,r.y);
+        }
+      };
+      start();
+    });
+  </script>
 </head>
 <body>
   <button onclick="fresh()"> fresh </button>
@@ -16,196 +208,4 @@
   <div id="panel"></div>
   <div id="hidden"></div>
 </body>
-<script type="text/javascript" src="http://mootools.net/download/get/mootools-core-1.4.5-full-compat.js"></script>
-<script type="text/javascript" src="mootools-more-drag.js"></script>
-<script type="text/javascript">
-  var IMGS = [
-    "http://ccm.ddcdn.com/photo-s/03/46/a2/f0/caption.jpg",
-    "http://ccm.ddcdn.com/ext/photo-s/03/57/74/6c/fairmont-beijing.jpg",
-    "http://ccm.ddcdn.com/ext/photo-s/02/a5/82/2f/business-card.jpg",
-    "http://ccm.ddcdn.com/ext/photo-s/02/ad/16/96/forbidden-city.jpg",
-    "http://ccm.ddcdn.com/ext/photo-s/02/a9/6a/b1/gold-fish.jpg",
-    "http://ccm.ddcdn.com/ext/photo-s/02/af/a0/50/sushi-bar-lunar-8.jpg",
-    "http://ccm.ddcdn.com/ext/photo-s/02/af/a0/5c/lunar-8.jpg",
-    "http://ccm.ddcdn.com/ext/photo-s/02/af/a0/5a/tandoor-kitchen-lunar.jpg",
-    "http://ccm.ddcdn.com/ext/photo-s/02/af/a0/5f/fairmont-gold-lounge.jpg",
-    "http://ccm.ddcdn.com/ext/photo-s/02/b0/d9/60/fairmont-gold-room.jpg"
-  ];
-  window.addEvent("domready",function(){
-    for(var i=0;i<IMGS.length;i++){
-      var imgSrc = IMGS[i];
-      var img = document.createElement("img");
-      img.src = imgSrc;
-      hide = document.getElementById("hidden");
-      hide.appendChild(img);
-    }
-  });
-  window.addEvent("load",function(){
-    var imgArray = [];
-    var margin = 5; //images' gap
-    var panel = $("panel");
-    var imgs = panel.getElements("img");
-    var index = 0;
-    var thumnail;
-    var changedImg;
-    function start(){
-      var initCount = 18;
-      for(var i=0;i<initCount;i++){
-        addImg(true);
-      }
-      orderImgs();
-      action();
-    };
-    window.fresh = function(){
-      imgs = imgs.reverse();
-      var tmp = imgs.splice(0,Math.floor(length/2));
-      imgs.concat(tmp);
-      imgs = imgs.sort(function(a,b){
-        a = Math.random() * imgs.length + parseInt($(a).get("order"));
-        b = Math.random() * imgs.length + parseInt($(b).get("order"));
-        return a - b;
-      });
-      orderImgs();
-      action();
-    };
-    window.addImg = function(dontRun){
-      var i = imgs.length%IMGS.length;
-      var imgSrc = IMGS[i];
-      var img = new Element("img",{
-        id: "d" + (index++)
-        ,src: imgSrc
-      });
-      panel.grab(img);
-      imgs.push(img);
-      img.set("origWidth",img.offsetWidth);
-      img.set("origHeight",img.offsetHeight);
-      img.setStyles({left:(panel.offsetWidth-img.offsetWidth)/2,top:(panel.offsetHeight-img.offsetHeight)/2,"z-index":"10"});
-      img.addEvent('mousedown', function(event){
-        event.stop();
-        var shirt = this;
-        var clone = shirt.clone().setStyles(shirt.getCoordinates()).setStyles({
-          opacity: 0.7,
-          position: 'absolute',
-          pointerEvents: 'none',
-          zIndex: 30
-        }).inject(document.body);
-        changedImg = this;
-        var drag = new Drag.Move(clone, {
-          droppables: imgs,
-          onDrop: function(dragging, cart ,ent){
-            dragging.destroy();
-            if(changedImg){
-              if (cart != null){
-                shirt.clone().inject(cart);
-                cart.highlight('#7389AE', '#FFF');
-                change(changedImg, cart);
-              } else{
-                var el = document.elementFromPoint(ent.page.x, ent.page.y).tagName.toLowerCase();
-                if(el === "body" || el === "html"){
-                  remove(changedImg);
-                }
-              }
-              changedImg = null;
-            }
-          },
-          onEnter: function(dragging, cart){
-            cart.tween('background-color', '#98B5C1');
-          },
-          onLeave: function(dragging, cart){
-            cart.tween('background-color', '#FFF');
-          },
-          onCancel: function(dragging){
-            dragging.destroy();
-          }
-        });
-        drag.start(event);
-      });
-      img.addEvent("mouseover",function(){
-        this.setStyle("background-color","#E79D35");
-      });
-      img.addEvent("mouseout",function(){
-        this.setStyle("background-color","#fff");
-      });
-      if(!dontRun){
-        orderImgs();
-        action();
-      }
-    };
-    function change(img1, img2){
-      var order1 = img1.get("order");
-      var order2 = img2.get("order");
-      img1.set("order",order2);
-      img2.set("order",order1);
-      action();
-    };
-    function remove(img){
-      imgs.splice($(img).get("order").toInt(),1);
-      img.dispose();
-      orderImgs();
-      action();
-    };
-    function orderImgs(){
-      for(var i=0,l=imgs.length;i<l;i++){
-        var img = $(imgs[i]);
-        img.set("order",i);
-      }
-    };
-    function action(){
-      var panelSize = panel.getSize();
-      var width = panelSize.x;
-      var height = panelSize.y;
-      imgArray = imgs = imgs.sort(function(a,b){
-        return parseInt($(a).get("order")) - parseInt($(b).get("order"));
-      });
-      
-      var objects = [];
-      for(var i=0;i<imgArray.length;i++){
-        var d = $(imgArray[i]);
-        var id = d.id;
-        var w = d.get("origWidth");
-        var h = d.get("origHeight");
-        var _obj = {i:id,w:w,h:h};
-        objects.push(_obj);
-      }
-      
-      var result = Poster.parse(objects, width, height, 5, 0, fresh);
-      
-      if(!result){
-        return;
-      }
-      
-      for(var j=0,l=result.length;j<l;j++){
-        var r = result[j];
-        var _div = $(r.i);
-        var duration = '600';
-        _div.setStyle("position","absolute");
-        var widthFx = new Fx.Tween(_div, {
-          duration: duration,
-          link: 'cancel',
-          property: 'width'
-        });
-        var heightFx = new Fx.Tween(_div, {
-          duration: duration,
-          link: 'cancel',
-          property: 'height'
-        });
-        var leftFx = new Fx.Tween(_div, {
-          duration: duration,
-          link: 'cancel',
-          property: 'left'
-        });
-        var topFx = new Fx.Tween(_div, {
-          duration: duration,
-          link: 'cancel',
-          property: 'top'
-        });
-        widthFx.start(_div.getStyle("width").toInt(),r.w-2*margin-2);
-        heightFx.start(_div.getStyle("height").toInt(),r.h-2*margin-2);
-        leftFx.start(_div.offsetLeft,r.x);
-        topFx.start(_div.offsetTop,r.y);
-      }
-    };
-    start();
-  });
-</script>
 </html>
