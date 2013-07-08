@@ -42,7 +42,7 @@
   });
   window.addEvent("load",function(){
     var imgArray = [];
-    var padding = 5; //images' gap
+    var margin = 5; //images' gap
     var panel = $("panel");
     var imgs = panel.getElements("img");
     var index = 0;
@@ -199,8 +199,8 @@
           link: 'cancel',
           property: 'top'
         });
-        widthFx.start(_div.offsetWidth-2*padding-2,r.w-2*padding-2);
-        heightFx.start(_div.offsetHeight-2*padding-2,r.h-2*padding-2);
+        widthFx.start(_div.getStyle("width").toInt(),r.w-2*margin-2);
+        heightFx.start(_div.getStyle("height").toInt(),r.h-2*margin-2);
         leftFx.start(_div.offsetLeft,r.x);
         topFx.start(_div.offsetTop,r.y);
       }
