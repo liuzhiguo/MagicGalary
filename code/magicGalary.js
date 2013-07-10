@@ -4,6 +4,8 @@ MagicGalary = {};
   var scale = 1;
   var padding = 0;
   var margin = 0;
+  var rebuildCount = 0;
+  var rebuildMaxCount = 20;
   /**
    * _padding is parent node padding
    * _margin is image's and parent node gap
@@ -65,7 +67,15 @@ MagicGalary = {};
   };
   
   function filterStruct(tree){
-    return Math.abs(Math.atan(1/tree.cotX) - Math.atan(1/scale)) < 0.15;
+    var ret =  Math.abs(Math.atan(1/tree.cotX) - Math.atan(1/scale)) < 0.15;
+    if(!ret && rebuildCount >= rebuildMaxCount){
+      ret = true;
+      rebuildCount = 0;
+    } else if(ret){
+      rebuildCount = 0;
+    }
+    rebuildCount++;
+    return ret;
   };
   
   function getBlockScale(dataList){
