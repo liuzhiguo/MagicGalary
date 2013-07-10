@@ -9,8 +9,8 @@
     #hidden{width:0px; height:0px; overflow:hidden;}
   </style>
   <script type="text/javascript" src="http://mootools.net/download/get/mootools-core-1.4.5-full-compat.js"></script>
-  <script type="text/javascript" src="mootools-more-drag.js"></script>
-  <script type="text/javascript" src="../lib/poster.js"></script>
+  <script type="text/javascript" src="lib/mootools-more-drag.js"></script>
+  <script type="text/javascript" src="../code/magicGalary.js"></script>
   <script type="text/javascript">
     var IMGS = [
       "http://ccm.ddcdn.com/photo-s/03/46/a2/f0/caption.jpg",
@@ -161,7 +161,7 @@
           objects.push(_obj);
         }
         
-        var result = Poster.parse(objects, width, height, 5, 0, fresh);
+        var result = MagicGalary.parse(objects, width, height, 5, 0, fresh);
         
         if(!result){
           return;

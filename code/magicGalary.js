@@ -1,5 +1,5 @@
-Poster = {};
-(function(poster){
+MagicGalary = {};
+(function(magicGalary){
   var result = []; 
   var scale = 1;
   var padding = 0;
@@ -8,7 +8,7 @@ Poster = {};
    * _padding is parent node padding
    * _margin is image's and parent node gap
    */
-  poster.parse = function(dataList, maxWidth, maxHeight, _padding, _margin, rebuild){
+  magicGalary.parse = function(dataList, maxWidth, maxHeight, _padding, _margin, rebuild){
     if(!dataList.length){
       return [];
     }
@@ -189,4 +189,4 @@ Poster = {};
     return {i:tree.i, w:width, h:height, x:x+margin/2, y:y+margin/2};
   };
   
-})(Poster);
+})(MagicGalary);
